@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  # php-service
+  php:
+    container_name: php
+    build:
+      context: .
+      target: php
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=database
+      - DB_PORT=3306
+      - DB_DATABASE=sudoku-game
+      - DB_USERNAME=user
+      - DB_PASSWORD=secret
+    depends_on:
+      - database
+    ports:
+      - "9000:9000"
+
+  # nginx-service
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    ports:
+      - "8000:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - .:/var/www
+    depends_on:
+      - php
+
+  # database-service
+  database:
+    container_name: database
+    image: mysql:8.4.0
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+
+volumes:
+  db-data: ~
